@@ -21,7 +21,7 @@ public class AddCourseUseCaseHandle extends UseCaseHandle {
         this.addCourseUseCase = addCourseUseCase;
     }
 
-    @ConsumeEvent(value = "sofkau.program.addcourse", blocking = true)
+    @ConsumeEvent(value = "sofkau.program.addcourse")
     void consumeBlocking(AddCourseCommand command) {
         var events = addCourseUseCase.apply(command);
         LOGGER.info("events: " + events);

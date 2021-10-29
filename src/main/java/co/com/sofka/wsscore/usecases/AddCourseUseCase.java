@@ -4,7 +4,6 @@ import co.com.sofka.wsscore.domain.generic.DomainEvent;
 import co.com.sofka.wsscore.domain.generic.EventStoreRepository;
 import co.com.sofka.wsscore.domain.program.Program;
 import co.com.sofka.wsscore.domain.program.command.AddCourseCommand;
-import co.com.sofka.wsscore.infra.MessageService;
 
 import javax.enterprise.context.Dependent;
 import java.util.List;
@@ -26,7 +25,7 @@ public class AddCourseUseCase implements Function<AddCourseCommand, List<DomainE
         var program = Program.from(
                 addCourseCommand.getProgramId(), repository.getEventsBy("program", addCourseCommand.getProgramId())
         );
-        program.addCourse(addCourseCommand.getCourseId(), addCourseCommand.getCategories());
+        program.addCourse(addCourseCommand.getCourseId(), addCourseCommand.getName(), addCourseCommand.getCategories());
         LOGGER.info("program: " + program.getUncommittedChanges());
         return program.getUncommittedChanges();
     }

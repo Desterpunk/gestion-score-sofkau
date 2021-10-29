@@ -1,11 +1,10 @@
 package co.com.sofka.wsscore.infra;
 
 
-import co.com.sofka.wsscore.domain.generic.Command;
 import co.com.sofka.wsscore.domain.program.command.AddCourseCommand;
 import co.com.sofka.wsscore.domain.program.command.AssignScoreCommand;
 import co.com.sofka.wsscore.domain.program.command.CreateProgramCommand;
-import org.jboss.resteasy.annotations.Body;
+import io.vertx.mutiny.core.eventbus.EventBus;
 
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
@@ -15,18 +14,17 @@ import java.util.logging.Logger;
 @Path("/api")
 public class CommandController {
 
-
-    private final MessageService messageService;
+    private final EventBus bus;
     private Logger LOGGER = Logger.getLogger(String.valueOf(CommandController.class));
-    public CommandController(MessageService messageService){
-        this.messageService = messageService;
+    public CommandController(EventBus bus){
+        this.bus = bus;
     }
 
     @POST
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/assignScore")
     public Response executor(AssignScoreCommand command) {
-        messageService.send(command);
+        bus.publish(command.getType(), command);
         return Response.ok().build();
     }
 
@@ -34,7 +32,7 @@ public class CommandController {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/createProgram")
     public Response executor(CreateProgramCommand command) {
-        messageService.send(command);
+        bus.publish(command.getType(), command);//emitir comandos, los casos de uso
         LOGGER.info("command: " + command.toString());
         return Response.ok().build();
     }
@@ -44,7 +42,7 @@ public class CommandController {
     @Consumes(MediaType.APPLICATION_JSON)
     @Path("/addCourse")
     public Response executor(AddCourseCommand command) {
-        messageService.send(command);
+        bus.publish(command.getType(), command);
         LOGGER.info("command: " + command.toString());
         return Response.ok().build();
     }

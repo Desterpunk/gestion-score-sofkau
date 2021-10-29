@@ -14,13 +14,11 @@ import javax.enterprise.event.Observes;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
-import java.util.function.Supplier;
 import java.util.logging.Logger;
 
 @ApplicationScoped
 public class MessageService {
     private static final String EXCHANGE = "executor";
-    private static final String EXECUTOR_QUEUE = "executor.queue";
     private static final String EVENT_QUEUE = "event.queue";
 
     private Logger LOGGER = Logger.getLogger(String.valueOf(MessageService.class));
@@ -39,14 +37,11 @@ public class MessageService {
         Connection connection = rabbitMQClient.connect();
         channel = connection.createChannel();
         channel.exchangeDeclare(EXCHANGE, BuiltinExchangeType.TOPIC, true);
-        //for command
-        channel.queueDeclare(EXECUTOR_QUEUE, true, false, false, null);
-        channel.queueBind(EXECUTOR_QUEUE, EXCHANGE, "executor-command");
+
         //for event
         channel.queueDeclare(EVENT_QUEUE, true, false, false, null);
         channel.queueBind(EVENT_QUEUE, EXCHANGE, "trigger-event");
 
-        channel.basicConsume(EXECUTOR_QUEUE, true, setupReceivingForCommand());
         channel.basicConsume(EVENT_QUEUE, true, setupReceivingForEvent());
 
         LOGGER.info("channel: " + channel.toString());
@@ -60,7 +55,7 @@ public class MessageService {
                 try {
                     var event = EventSerializer.instance()
                             .deserialize(message, Class.forName(properties.getContentType()));
-                    bus.publish(event.getType(), event);
+                    bus.publish(event.getType(), event);// emite localmente eventos
                 } catch (ClassNotFoundException e) {
                     e.printStackTrace();
                 }
@@ -68,39 +63,6 @@ public class MessageService {
         };
     }
 
-
-
-    private DefaultConsumer setupReceivingForCommand() {
-        return new DefaultConsumer(channel) {
-                @Override
-                public void handleDelivery(String consumerTag, Envelope envelope, AMQP.BasicProperties properties, byte[] body) throws IOException {
-                   var message = new String(body, StandardCharsets.UTF_8);
-
-                    try {
-                        var command = CommandSerializer.instance()
-                                .deserialize(message, Class.forName(properties.getContentType()));
-                        bus.publish(command.getType(), command);
-                    } catch (ClassNotFoundException e) {
-                        e.printStackTrace();
-                    }
-
-                }
-            };
-    }
-
-    public void send(Command command) {
-        System.out.println("Send command...");
-        try {
-            var message = CommandSerializer.instance().serialize(command);
-            var props = new AMQP.BasicProperties.Builder().contentType(command.getClass().getTypeName()).build();
-            LOGGER.info("message: " + message);
-            LOGGER.info("props: " + props.toString());
-
-            channel.basicPublish(EXCHANGE, "executor-command", props, message.getBytes(StandardCharsets.UTF_8));
-        } catch (IOException e) {
-            throw new UncheckedIOException(e);
-        }
-    }
 
     public void send(DomainEvent event) {
         System.out.println("Send event...");
