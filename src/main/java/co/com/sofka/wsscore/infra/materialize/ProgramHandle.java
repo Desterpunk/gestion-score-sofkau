@@ -2,6 +2,7 @@ package co.com.sofka.wsscore.infra.materialize;
 
 import co.com.sofka.wsscore.domain.program.event.CourseAssigned;
 import co.com.sofka.wsscore.domain.program.event.ProgramCreated;
+import co.com.sofka.wsscore.infra.handle.AddCourseUseCaseHandle;
 import com.mongodb.BasicDBObject;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.model.Filters;
@@ -12,10 +13,12 @@ import org.bson.Document;
 import javax.enterprise.context.ApplicationScoped;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Logger;
 
 @ApplicationScoped
 public class ProgramHandle {
     private final MongoClient mongoClient;
+    private Logger LOGGER = Logger.getLogger(String.valueOf(ProgramHandle.class));
 
     public ProgramHandle(MongoClient mongoClient) {
         this.mongoClient = mongoClient;
@@ -29,6 +32,7 @@ public class ProgramHandle {
         document.put("name", event.getName());
         mongoClient.getDatabase("queries").getCollection("program")
                 .insertOne(new Document(document));
+        LOGGER.info("document: " + document);
     }
 
     @ConsumeEvent(value = "sofkau.program.courseassigned", blocking = true)
@@ -40,6 +44,7 @@ public class ProgramHandle {
         updateObject.put("$set", document);
         mongoClient.getDatabase("queries").getCollection("program")
                 .updateOne( Filters.eq("_id", event.getAggregateId()), updateObject);
+        LOGGER.info("document: " + document);
     }
 
 

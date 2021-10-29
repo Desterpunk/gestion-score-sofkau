@@ -4,6 +4,7 @@ import co.com.sofka.wsscore.domain.generic.DomainEvent;
 import co.com.sofka.wsscore.domain.generic.EventStoreRepository;
 import co.com.sofka.wsscore.domain.generic.StoredEvent;
 import co.com.sofka.wsscore.infra.generic.EventSerializer;
+import co.com.sofka.wsscore.infra.materialize.ProgramHandle;
 import com.mongodb.Function;
 import com.mongodb.client.MongoClient;
 import org.bson.Document;
@@ -12,12 +13,14 @@ import javax.enterprise.context.ApplicationScoped;
 
 import java.util.*;
 import java.util.function.Consumer;
+import java.util.logging.Logger;
 
 import static com.mongodb.client.model.Filters.eq;
 
 @ApplicationScoped
 public class MongoEventStoreRepository implements EventStoreRepository {
     private final MongoClient mongoClient;
+    private Logger LOGGER = Logger.getLogger(String.valueOf(MongoEventStoreRepository.class));
 
     public MongoEventStoreRepository(MongoClient mongoClient){
          this.mongoClient = mongoClient;
@@ -51,6 +54,8 @@ public class MongoEventStoreRepository implements EventStoreRepository {
         document.put("occurredOn", storedEvent.getOccurredOn());
         document.put("typeName", storedEvent.getTypeName());
         document.put("eventBody", storedEvent.getEventBody());
+
+        LOGGER.info("document: " + document);
 
         mongoClient.getDatabase("command").getCollection(aggregateName).insertOne(new Document(document));
     }

@@ -10,13 +10,14 @@ import org.jboss.resteasy.annotations.Body;
 import javax.ws.rs.*;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
+import java.util.logging.Logger;
 
 @Path("/api")
 public class CommandController {
 
 
     private final MessageService messageService;
-
+    private Logger LOGGER = Logger.getLogger(String.valueOf(CommandController.class));
     public CommandController(MessageService messageService){
         this.messageService = messageService;
     }
@@ -34,6 +35,7 @@ public class CommandController {
     @Path("/createProgram")
     public Response executor(CreateProgramCommand command) {
         messageService.send(command);
+        LOGGER.info("command: " + command.toString());
         return Response.ok().build();
     }
 
@@ -43,6 +45,7 @@ public class CommandController {
     @Path("/addCourse")
     public Response executor(AddCourseCommand command) {
         messageService.send(command);
+        LOGGER.info("command: " + command.toString());
         return Response.ok().build();
     }
 

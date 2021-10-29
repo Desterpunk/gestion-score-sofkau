@@ -14,12 +14,16 @@ import javax.enterprise.event.Observes;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.charset.StandardCharsets;
+import java.util.function.Supplier;
+import java.util.logging.Logger;
 
 @ApplicationScoped
 public class MessageService {
     private static final String EXCHANGE = "executor";
     private static final String EXECUTOR_QUEUE = "executor.queue";
     private static final String EVENT_QUEUE = "event.queue";
+
+    private Logger LOGGER = Logger.getLogger(String.valueOf(MessageService.class));
 
     private final EventBus bus;
     private final RabbitMQClient rabbitMQClient;
@@ -44,6 +48,8 @@ public class MessageService {
 
         channel.basicConsume(EXECUTOR_QUEUE, true, setupReceivingForCommand());
         channel.basicConsume(EVENT_QUEUE, true, setupReceivingForEvent());
+
+        LOGGER.info("channel: " + channel.toString());
     }
 
     private Consumer setupReceivingForEvent() {
@@ -87,6 +93,9 @@ public class MessageService {
         try {
             var message = CommandSerializer.instance().serialize(command);
             var props = new AMQP.BasicProperties.Builder().contentType(command.getClass().getTypeName()).build();
+            LOGGER.info("message: " + message);
+            LOGGER.info("props: " + props.toString());
+
             channel.basicPublish(EXCHANGE, "executor-command", props, message.getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             throw new UncheckedIOException(e);
@@ -98,6 +107,9 @@ public class MessageService {
         try {
             var message = EventSerializer.instance().serialize(event);
             var props = new AMQP.BasicProperties.Builder().contentType(event.getClass().getTypeName()).build();
+            LOGGER.info("message: " + message);
+            LOGGER.info("props: " + props.toString());
+
             channel.basicPublish(EXCHANGE, "trigger-event", props, message.getBytes(StandardCharsets.UTF_8));
         } catch (IOException e) {
             throw new UncheckedIOException(e);
